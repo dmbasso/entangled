@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
+# developed by Jeremy Gangnier - http://jergagnier.wix.com/
+# no licensing information provided
+# code improvements by daniel@basso.inf.br
+
+
 from pygame import *
 from pygame import _view
 from random import *
