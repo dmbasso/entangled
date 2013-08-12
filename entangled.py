@@ -7,7 +7,6 @@
 
 
 from pygame import *
-from pygame import _view
 from random import *
 from math import *
 
@@ -37,9 +36,9 @@ for b in range(20):
     for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
     draw.polygon(start_hex,(175+b*4,0,0),points)
 
-p_font = font.Font('fonts/BOOKOS.ttf',20)
-t1_font = font.Font('fonts/BOOKOS.ttf',58)
-t2_font = font.Font('fonts/BOOKOS.ttf',48)
+p_font = font.Font('fonts/BOOKOS.TTF',20)
+t1_font = font.Font('fonts/BOOKOS.TTF',58)
+t2_font = font.Font('fonts/BOOKOS.TTF',48)
 
 class entangled:
     def __init__(self):
@@ -79,7 +78,7 @@ class entangled:
             if i[2] == self.line1[0]:
                 x = 50+cos(radians(self.line1[1]*30-15))*45+i[0]
                 y = 50+sin(radians(self.line1[1]*30-15))*45+i[1]
-                draw.circle(surface,(255,0,0),(round(x),round(y)),5)
+                draw.circle(surface,(255,0,0),(int(round(x)),int(round(y))),5)
 
 
 def make_piece(hex=1):
