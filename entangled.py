@@ -6,41 +6,57 @@
 # code improvements by daniel@basso.inf.br
 
 
+import os
 import pygame as pg
+
 from random import randint
 from math import cos, sin, radians
 
+
 pg.init()
+
+
+class color:
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    red = (255, 0, 0)
+
+
+class fonts:
+    name = 'fonts/BOOKOS.TTF'
+    if not os.path.exists(name):
+        name = pg.font.get_default_font()
+    p = pg.font.Font(name, 20)
+    t1 = pg.font.Font(name, 58)
+    t2 = pg.font.Font(name, 48)
+
 
 size = width,height = 800,660
 screen = pg.display.set_mode(size)
 
 trans_scr = pg.Surface(size)
 trans_scr.set_alpha(150)
-trans_scr.set_colorkey((0,0,0))
+trans_scr.set_colorkey(color.black)
 
 paths_img = pg.Surface(size)
-paths_img.set_colorkey((0,0,0))
+paths_img.set_colorkey(color.black)
 
 empty_hex = pg.Surface((101,100)) # Base image for a board piece
-empty_hex.set_colorkey((0,0,0))
+empty_hex.set_colorkey(color.black)
 for b in range(20):
     points = []
     for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
     pg.draw.polygon(empty_hex,(100,100,175+b*4),points)
 
 start_hex = pg.Surface((101,100))
-start_hex.set_colorkey((0,0,0))
+start_hex.set_colorkey(color.black)
 for b in range(20):
     points = []
     for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
     pg.draw.polygon(start_hex,(175+b*4,0,0),points)
 
-p_font = pg.font.Font('fonts/BOOKOS.TTF',20)
-t1_font = pg.font.Font('fonts/BOOKOS.TTF',58)
-t2_font = pg.font.Font('fonts/BOOKOS.TTF',48)
 
-class entangled:
+class Board:
     def __init__(self):
         """This class handles the game board."""
 
@@ -78,7 +94,7 @@ class entangled:
             if i[2] == self.line1[0]:
                 x = 50+cos(radians(self.line1[1]*30-15))*45+i[0]
                 y = 50+sin(radians(self.line1[1]*30-15))*45+i[1]
-                pg.draw.circle(surface,(255,0,0),(int(round(x)),int(round(y))),5)
+                pg.draw.circle(surface,color.red,(int(round(x)),int(round(y))),5)
 
 
 def make_piece(hex=1):
@@ -86,11 +102,11 @@ def make_piece(hex=1):
 
     if hex:
         piece = pg.Surface((101,100))
-        piece.set_colorkey((0,0,0))
+        piece.set_colorkey(color.black)
         path_img = pg.Surface((101,100))
-        path_img.set_colorkey((255,255,255))
+        path_img.set_colorkey(color.white)
         path_img.set_alpha(254)
-        path_img.fill((255,255,255))
+        path_img.fill(color.white)
         for b in range(10):
             points = []
             for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
@@ -117,7 +133,7 @@ def make_piece(hex=1):
             if -1 <= i[0]-i[1] <= 1 and ((i[0] > i[1] and i[0]%2 < i[1]%2) \
             or (i[0] < i[1] and i[0]%2 > i[1]%2)): width = 10
             else: width = 5
-            pg.draw.line(path_img,(0,0,0),(x1,y1),(x2,y2),width)
+            pg.draw.line(path_img,color.black,(x1,y1),(x2,y2),width)
 
     piece.blit(path_img,(0,0))
     return [piece,paths]
@@ -128,7 +144,7 @@ def draw_text(x,y,font,text,colour,surface=screen):
     x2,y2 = font.size(text)
     surface.blit(font.render(text,1,colour),(x-x2/2,y-y2/2))
 
-g_board = entangled()   # Initialise game board
+g_board = Board()   # Initialise game board
 status = 1
 points1 = 0
 
@@ -155,11 +171,11 @@ while cont:
             if i[1] == 0: i[1] = 12
 
         piece = pg.Surface((101,100))  # Change the image of the tile
-        piece.set_colorkey((0,0,0))
+        piece.set_colorkey(color.black)
         path_img = pg.Surface((101,100))
-        path_img.set_colorkey((255,255,255))
+        path_img.set_colorkey(color.white)
         path_img.set_alpha(254)
-        path_img.fill((255,255,255))
+        path_img.fill(color.white)
         for b in range(10):
             points = []
             for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
@@ -173,7 +189,7 @@ while cont:
             if -1 <= i[0]-i[1] <= 1 and ((i[0] > i[1] and i[0]%2 < i[1]%2) \
             or (i[0] < i[1] and i[0]%2 > i[1]%2)): width = 10
             else: width = 5
-            pg.draw.line(path_img,(0,0,0),(x1,y1),(x2,y2),width)
+            pg.draw.line(path_img,color.black,(x1,y1),(x2,y2),width)
         piece.blit(path_img,(0,0))
 
         new_tile[0] = piece
@@ -182,13 +198,13 @@ while cont:
         new_tile,rep_tile = rep_tile,new_tile
 
     elif lc and 640 < mx < 760 and 15 < my < 45:    # New game button
-        g_board = entangled()
+        g_board = Board()
         status = 1
         points1 = 0
 
         new_tile = make_piece()
         rep_tile = make_piece()
-        paths_img.fill((0,0,0))
+        paths_img.fill(color.black)
 
     elif lc and status == 1:    # Place down new tile and update path
 
@@ -219,8 +235,8 @@ while cont:
         del new_tile
 
     # Update the screen image
-    screen.fill((255,255,255))
-    trans_scr.fill((0,0,0))
+    screen.fill(color.white)
+    trans_scr.fill(color.black)
     g_board.draw_board(screen)
 
     for i in g_board.coords:
@@ -274,7 +290,7 @@ while cont:
                             y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
                             x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
                             y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
-                            pg.draw.line(paths_img,(255,0,0),(x1,y1),(x2,y2),3)
+                            pg.draw.line(paths_img,color.red,(x1,y1),(x2,y2),3)
 
                     for i in g_board.coords:
                         if i[2] == g_board.line1[0]:
@@ -342,7 +358,7 @@ while cont:
                         y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
                         x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
                         y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
-                        pg.draw.line(paths_img,(255,0,0),(x1,y1),(x2,y2),3)
+                        pg.draw.line(paths_img,color.red,(x1,y1),(x2,y2),3)
 
                 for i in g_board.coords:
                     if i[2] == g_board.line1[0]:
@@ -368,21 +384,21 @@ while cont:
     screen.blit(paths_img,(0,0))
     screen.blit(rep_tile[0],(0,530))
 
-    p_msg = p_font.render('Points: '+str(points1),1,(0,0,0))
+    p_msg = fonts.p.render('Points: '+str(points1),1,color.black)
     screen.blit(p_msg,(10,10))
-    draw_text(700,30,p_font,'New Game',(0,0,0))
+    draw_text(700, 30, fonts.p, 'New Game',color.black)
     if 640 < mx < 760 and 15 < my < 45:
-        pg.draw.rect(screen,(0,0,0),(640,15,120,30),2)
+        pg.draw.rect(screen,color.black,(640,15,120,30),2)
 
     g_board.draw_path(screen)
 
     if status == -1:    # Game ending condition
-        screen.blit(t1_font.render('Game Over',0,(0,0,0)),(150,250))
-        screen.blit(t1_font.render('Game Over',1,(255,255,255)),(150,250))
+        screen.blit(fonts.t1.render('Game Over',0,color.black),(150,250))
+        screen.blit(fonts.t1.render('Game Over',1,color.white),(150,250))
         if points1 == 1:
-            screen.blit(t2_font.render('You are a disgrace.',1,(255,255,255)),(100,310))
+            screen.blit(fonts.t2.render('You are a disgrace.',1,color.white),(100,310))
         else:
-            screen.blit(t2_font.render('You scored '+str(points1)+' points.',1,(255,255,255)),(70,310))
+            screen.blit(fonts.t2.render('You scored '+str(points1)+' points.',1,color.white),(70,310))
 
     pg.display.flip()
     pg.time.wait(30)
