@@ -152,6 +152,11 @@ new_tile = make_piece() # Make the next tile
 rep_tile = make_piece() # Make the reserved tile
 cont = 1
 
+xy_incs = [(1, 0), (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1)]
+xy_px_incs = [(75, 44), (0, 88), (-75, 44), (-75, -44), (0, -88), (75, -44)]
+xy_inc_map = dict((i + 1, xy_incs[i // 2]) for i in range(12))
+xy_px_inc_map = dict((i + 1, xy_px_incs[i // 2]) for i in range(12))
+
 while cont:
     lc = rc = 0
     for event in pg.event.get():
@@ -207,24 +212,12 @@ while cont:
         paths_img.fill(color.black)
 
     elif lc and status == 1:    # Place down new tile and update path
-
-        if g_board.line1[1] in (1,2): x_plus,y_plus = 1,0
-        if g_board.line1[1] in (3,4): x_plus,y_plus = 1,1
-        if g_board.line1[1] in (5,6): x_plus,y_plus = 0,1
-        if g_board.line1[1] in (7,8): x_plus,y_plus = -1,0
-        if g_board.line1[1] in (9,10): x_plus,y_plus = -1,-1
-        if g_board.line1[1] in (11,12): x_plus,y_plus = 0,-1
-        g_board.line1[0][0] += x_plus
-        g_board.line1[0][1] += y_plus
-
+        # Change x,y coordinate
+        g_board.line1[0][0] += xy_inc_map[g_board.line1[1]][0]
+        g_board.line1[0][1] += xy_inc_map[g_board.line1[1]][1]
         # Complex path changing
-        if g_board.line1[1] in (1,2): g_board.line1[1] = g_board.line1[1]%2+7
-        elif g_board.line1[1] in (3,4): g_board.line1[1] = g_board.line1[1]%2+9
-        elif g_board.line1[1] in (5,6): g_board.line1[1] = g_board.line1[1]%2+11
-        elif g_board.line1[1] in (7,8): g_board.line1[1] = g_board.line1[1]%2+1
-        elif g_board.line1[1] in (9,10): g_board.line1[1] = g_board.line1[1]%2+3
-        elif g_board.line1[1] in (11,12): g_board.line1[1] = g_board.line1[1]%2+5
-        else: raise 'WHAAAT'    # (this should never happen)
+        path_update = ((g_board.line1[1] - 1 & ~1) + 7) % 12
+        g_board.line1[1] = g_board.line1[1] % 2 + path_update
 
         for i in range(len(g_board.coords)):
             if g_board.coords[i][2] == g_board.line1[0]: break
@@ -241,16 +234,8 @@ while cont:
 
     for i in g_board.coords:
         if i[2] == g_board.line1[0]:
-
-            if g_board.line1[1] in (1,2): x_plus,y_plus = 75,44
-            if g_board.line1[1] in (3,4): x_plus,y_plus = 0,88
-            if g_board.line1[1] in (5,6): x_plus,y_plus = -75,44
-            if g_board.line1[1] in (7,8): x_plus,y_plus = -75,-44
-            if g_board.line1[1] in (9,10): x_plus,y_plus = 0,-88
-            if g_board.line1[1] in (11,12): x_plus,y_plus = 75,-44
-            x = i[0]+x_plus
-            y = i[1]+y_plus
-
+            x = i[0] + xy_px_inc_map[g_board.line1[1]][0]
+            y = i[1] + xy_px_inc_map[g_board.line1[1]][1]
             in_map = 0
             for i in g_board.coords:
                 if i[0:2] == (x,y): in_map = 1
@@ -294,14 +279,8 @@ while cont:
 
                     for i in g_board.coords:
                         if i[2] == g_board.line1[0]:
-                            if g_board.line1[1] in (1,2): x_plus,y_plus = 75,44
-                            if g_board.line1[1] in (3,4): x_plus,y_plus = 0,88
-                            if g_board.line1[1] in (5,6): x_plus,y_plus = -75,44
-                            if g_board.line1[1] in (7,8): x_plus,y_plus = -75,-44
-                            if g_board.line1[1] in (9,10): x_plus,y_plus = 0,-88
-                            if g_board.line1[1] in (11,12): x_plus,y_plus = 75,-44
-                            x = i[0]+x_plus
-                            y = i[1]+y_plus
+                            x = i[0] + xy_px_inc_map[g_board.line1[1]][0]
+                            y = i[1] + xy_px_inc_map[g_board.line1[1]][1]
 
                     for i in range(len(g_board.coords)):
                         if (x,y) == g_board.coords[i][0:2]: break
@@ -312,25 +291,12 @@ while cont:
                         new_tile = make_piece()
 
     elif status == 0:   # Still updating path condition
-
         # Change x,y coordinate
-        if g_board.line1[1] in (1,2): x_plus,y_plus = 1,0
-        if g_board.line1[1] in (3,4): x_plus,y_plus = 1,1
-        if g_board.line1[1] in (5,6): x_plus,y_plus = 0,1
-        if g_board.line1[1] in (7,8): x_plus,y_plus = -1,0
-        if g_board.line1[1] in (9,10): x_plus,y_plus = -1,-1
-        if g_board.line1[1] in (11,12): x_plus,y_plus = 0,-1
-        g_board.line1[0][0] += x_plus
-        g_board.line1[0][1] += y_plus
-
+        g_board.line1[0][0] += xy_inc_map[g_board.line1[1]][0]
+        g_board.line1[0][1] += xy_inc_map[g_board.line1[1]][1]
         # Change path end
-        if g_board.line1[1] in (1,2): g_board.line1[1] = g_board.line1[1]%2+7
-        elif g_board.line1[1] in (3,4): g_board.line1[1] = g_board.line1[1]%2+9
-        elif g_board.line1[1] in (5,6): g_board.line1[1] = g_board.line1[1]%2+11
-        elif g_board.line1[1] in (7,8): g_board.line1[1] = g_board.line1[1]%2+1
-        elif g_board.line1[1] in (9,10): g_board.line1[1] = g_board.line1[1]%2+3
-        elif g_board.line1[1] in (11,12): g_board.line1[1] = g_board.line1[1]%2+5
-        else: raise 'WHAAAT'
+        path_update = ((g_board.line1[1] - 1 & ~1) + 7) % 12
+        g_board.line1[1] = g_board.line1[1] % 2 + path_update
 
         for i in range(len(g_board.coords)):
             if g_board.coords[i][2] == g_board.line1[0]: break
@@ -362,14 +328,8 @@ while cont:
 
                 for i in g_board.coords:
                     if i[2] == g_board.line1[0]:
-                        if g_board.line1[1] in (1,2): x_plus,y_plus = 75,44
-                        if g_board.line1[1] in (3,4): x_plus,y_plus = 0,88
-                        if g_board.line1[1] in (5,6): x_plus,y_plus = -75,44
-                        if g_board.line1[1] in (7,8): x_plus,y_plus = -75,-44
-                        if g_board.line1[1] in (9,10): x_plus,y_plus = 0,-88
-                        if g_board.line1[1] in (11,12): x_plus,y_plus = 75,-44
-                        x = i[0]+x_plus
-                        y = i[1]+y_plus
+                        x = i[0] + xy_px_inc_map[g_board.line1[1]][0]
+                        y = i[1] + xy_px_inc_map[g_board.line1[1]][1]
 
                 for i in range(len(g_board.coords)):
                     if (x,y) == g_board.coords[i][0:2]: break
@@ -402,7 +362,5 @@ while cont:
 
     pg.display.flip()
     pg.time.wait(30)
-
-quit()
 
 
