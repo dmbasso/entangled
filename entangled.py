@@ -6,39 +6,39 @@
 # code improvements by daniel@basso.inf.br
 
 
-from pygame import *
-from random import *
-from math import *
+import pygame as pg
+from random import randint
+from math import cos, sin, radians
 
-init()
+pg.init()
 
 size = width,height = 800,660
-screen = display.set_mode(size)
+screen = pg.display.set_mode(size)
 
-trans_scr = Surface(size)
+trans_scr = pg.Surface(size)
 trans_scr.set_alpha(150)
 trans_scr.set_colorkey((0,0,0))
 
-paths_img = Surface(size)
+paths_img = pg.Surface(size)
 paths_img.set_colorkey((0,0,0))
 
-empty_hex = Surface((101,100)) # Base image for a board piece
+empty_hex = pg.Surface((101,100)) # Base image for a board piece
 empty_hex.set_colorkey((0,0,0))
 for b in range(20):
     points = []
     for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-    draw.polygon(empty_hex,(100,100,175+b*4),points)
+    pg.draw.polygon(empty_hex,(100,100,175+b*4),points)
 
-start_hex = Surface((101,100))
+start_hex = pg.Surface((101,100))
 start_hex.set_colorkey((0,0,0))
 for b in range(20):
     points = []
     for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-    draw.polygon(start_hex,(175+b*4,0,0),points)
+    pg.draw.polygon(start_hex,(175+b*4,0,0),points)
 
-p_font = font.Font('fonts/BOOKOS.TTF',20)
-t1_font = font.Font('fonts/BOOKOS.TTF',58)
-t2_font = font.Font('fonts/BOOKOS.TTF',48)
+p_font = pg.font.Font('fonts/BOOKOS.TTF',20)
+t1_font = pg.font.Font('fonts/BOOKOS.TTF',58)
+t2_font = pg.font.Font('fonts/BOOKOS.TTF',48)
 
 class entangled:
     def __init__(self):
@@ -78,23 +78,23 @@ class entangled:
             if i[2] == self.line1[0]:
                 x = 50+cos(radians(self.line1[1]*30-15))*45+i[0]
                 y = 50+sin(radians(self.line1[1]*30-15))*45+i[1]
-                draw.circle(surface,(255,0,0),(int(round(x)),int(round(y))),5)
+                pg.draw.circle(surface,(255,0,0),(int(round(x)),int(round(y))),5)
 
 
 def make_piece(hex=1):
     """Creates a new board piece image and possible paths."""
 
     if hex:
-        piece = Surface((101,100))
+        piece = pg.Surface((101,100))
         piece.set_colorkey((0,0,0))
-        path_img = Surface((101,100))
+        path_img = pg.Surface((101,100))
         path_img.set_colorkey((255,255,255))
         path_img.set_alpha(254)
         path_img.fill((255,255,255))
         for b in range(10):
             points = []
             for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-            draw.polygon(piece,(255-b*10,202-b*10,131-b*10),points)
+            pg.draw.polygon(piece,(255-b*10,202-b*10,131-b*10),points)
         paths = []
         for i in range(6):
             while 1:
@@ -117,7 +117,7 @@ def make_piece(hex=1):
             if -1 <= i[0]-i[1] <= 1 and ((i[0] > i[1] and i[0]%2 < i[1]%2) \
             or (i[0] < i[1] and i[0]%2 > i[1]%2)): width = 10
             else: width = 5
-            draw.line(path_img,(0,0,0),(x1,y1),(x2,y2),width)
+            pg.draw.line(path_img,(0,0,0),(x1,y1),(x2,y2),width)
 
     piece.blit(path_img,(0,0))
     return [piece,paths]
@@ -138,14 +138,14 @@ cont = 1
 
 while cont:
     lc = rc = 0
-    for evnt in event.get():
-        if evnt.type == QUIT: cont = 0
-        elif evnt.type == MOUSEBUTTONDOWN:
-            if evnt.button == 1: lc = 1
-            if evnt.button == 3: rc = 1
+    for event in pg.event.get():
+        if event.type == pg.QUIT: cont = 0
+        elif event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1: lc = 1
+            if event.button == 3: rc = 1
 
-    if key.get_pressed()[K_ESCAPE]: break
-    mx,my = mouse.get_pos()
+    if pg.key.get_pressed()[pg.K_ESCAPE]: break
+    mx,my = pg.mouse.get_pos()
 
     if rc and status == 1:  # Rotate tile
         for i in new_tile[1]:
@@ -154,16 +154,16 @@ while cont:
             if i[0] == 0: i[0] = 12
             if i[1] == 0: i[1] = 12
 
-        piece = Surface((101,100))  # Change the image of the tile
+        piece = pg.Surface((101,100))  # Change the image of the tile
         piece.set_colorkey((0,0,0))
-        path_img = Surface((101,100))
+        path_img = pg.Surface((101,100))
         path_img.set_colorkey((255,255,255))
         path_img.set_alpha(254)
         path_img.fill((255,255,255))
         for b in range(10):
             points = []
             for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-            draw.polygon(piece,(255-b*10,202-b*10,131-b*10),points)
+            pg.draw.polygon(piece,(255-b*10,202-b*10,131-b*10),points)
 
         for i in new_tile[1]:   # Redraw the paths
             x1 = 50+cos(radians(i[0]*30-15))*45
@@ -173,7 +173,7 @@ while cont:
             if -1 <= i[0]-i[1] <= 1 and ((i[0] > i[1] and i[0]%2 < i[1]%2) \
             or (i[0] < i[1] and i[0]%2 > i[1]%2)): width = 10
             else: width = 5
-            draw.line(path_img,(0,0,0),(x1,y1),(x2,y2),width)
+            pg.draw.line(path_img,(0,0,0),(x1,y1),(x2,y2),width)
         piece.blit(path_img,(0,0))
 
         new_tile[0] = piece
@@ -274,7 +274,7 @@ while cont:
                             y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
                             x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
                             y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
-                            draw.line(paths_img,(255,0,0),(x1,y1),(x2,y2),3)
+                            pg.draw.line(paths_img,(255,0,0),(x1,y1),(x2,y2),3)
 
                     for i in g_board.coords:
                         if i[2] == g_board.line1[0]:
@@ -342,7 +342,7 @@ while cont:
                         y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
                         x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
                         y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
-                        draw.line(paths_img,(255,0,0),(x1,y1),(x2,y2),3)
+                        pg.draw.line(paths_img,(255,0,0),(x1,y1),(x2,y2),3)
 
                 for i in g_board.coords:
                     if i[2] == g_board.line1[0]:
@@ -372,7 +372,7 @@ while cont:
     screen.blit(p_msg,(10,10))
     draw_text(700,30,p_font,'New Game',(0,0,0))
     if 640 < mx < 760 and 15 < my < 45:
-        draw.rect(screen,(0,0,0),(640,15,120,30),2)
+        pg.draw.rect(screen,(0,0,0),(640,15,120,30),2)
 
     g_board.draw_path(screen)
 
@@ -384,8 +384,8 @@ while cont:
         else:
             screen.blit(t2_font.render('You scored '+str(points1)+' points.',1,(255,255,255)),(70,310))
 
-    display.flip()
-    time.wait(30)
+    pg.display.flip()
+    pg.time.wait(30)
 
 quit()
 
