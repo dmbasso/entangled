@@ -109,10 +109,28 @@ class Board:
                                hex_point(self.line1[1], i), 6, 2)
 
 
+def bezier(p, t):
+    return (
+        p[0] * (1 - t) ** 3 +
+        p[1] * (1 - t) ** 2 * t * 3 +
+        p[2] * (1 - t) * t ** 2 * 3 +
+        p[3] * t ** 3
+        )
+
+
 def draw_path(surface, path, color, width, offset=None):
+    cx = 50 + (0 if offset is None else offset[0])
+    cy = 50 + (0 if offset is None else offset[1])
     p1 = hex_point(path[0], offset)
     p2 = hex_point(path[1], offset)
-    pg.draw.line(surface, color, p1, p2, width)
+    cx = (cx + p1[0] + p2[0]) / 3  # reduce curvature
+    cy = (cy + p1[1] + p2[1]) / 3
+    points = []
+    for i in range(11):
+        x = bezier([p1[0], cx, cx, p2[0]], i / 10.)
+        y = bezier([p1[1], cy, cy, p2[1]], i / 10.)
+        points.append((x, y))
+    pg.draw.lines(surface, color, False, points, width)
 
 
 def draw_tile(paths):
