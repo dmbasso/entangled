@@ -20,6 +20,7 @@ class color:
     white = (255, 255, 255)
     black = (0, 0, 0)
     red = (255, 0, 0)
+    green = (0,255,0)
 
 
 class fonts:
@@ -94,7 +95,7 @@ class Board:
             if i[2] == self.line1[0]:
                 x = 50+cos(radians(self.line1[1]*30-15))*45+i[0]
                 y = 50+sin(radians(self.line1[1]*30-15))*45+i[1]
-                pg.draw.circle(surface,color.red,(int(round(x)),int(round(y))),5)
+                pg.draw.circle(surface,color.green,(int(round(x)),int(round(y))), 6, 2)
 
 
 def make_piece(hex=1):
@@ -154,7 +155,7 @@ xy_px_inc_map = dict((i + 1, xy_px_incs[i // 2]) for i in range(12))
 
 class Entangled:
 
-    st_interactive, st_cascading, st_gameover = range(3)
+    st_interactive, st_chaining, st_gameover = range(3)
 
     def __init__(self):
         self.done = False
@@ -252,6 +253,48 @@ class Entangled:
 
         del self.new_tile
 
+    def calc_chain(self, start=False):
+        for i in range(len(self.g_board.coords)):
+            if self.g_board.coords[i][2] == self.g_board.line1[0]: break
+
+        current_piece = self.g_board.pieces[i]
+
+        if current_piece[0][1] != [] and self.state != self.st_gameover:
+            self.state = self.st_chaining
+
+            if current_piece[0][1] == 1: self.state = self.st_gameover
+
+            if self.state == self.st_chaining: # Award points for chaining
+                self.chain = 1 + (0 if start else self.chain)
+                self.score += self.chain
+                for i in current_piece[0][1]:
+                    draw_line = 0
+                    if self.g_board.line1[1] == i[0]:
+                        self.g_board.line1[1] = i[1]
+                        draw_line = 1
+                    elif self.g_board.line1[1] == i[1]:
+                        self.g_board.line1[1] = i[0]
+                        draw_line = 1
+                    if draw_line:
+                        x1 = 50+cos(radians(i[0]*30-15))*45+current_piece[1][0]
+                        y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
+                        x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
+                        y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
+                        pg.draw.line(paths_img,color.red,(x1,y1),(x2,y2),3)
+
+                for i in self.g_board.coords:
+                    if i[2] == self.g_board.line1[0]:
+                        x = i[0] + xy_px_inc_map[self.g_board.line1[1]][0]
+                        y = i[1] + xy_px_inc_map[self.g_board.line1[1]][1]
+
+                for i in range(len(self.g_board.coords)):
+                    if (x,y) == self.g_board.coords[i][0:2]: break
+                next_piece = self.g_board.pieces[i]
+
+                if next_piece[0][1] == []:  # Done chaining, make next tile
+                    self.state = self.st_interactive
+                    self.new_tile = make_piece()
+
     def main_loop(self):
         """
             coordinate the game processing flow
@@ -285,103 +328,20 @@ class Entangled:
                     if not in_map:
                         self.state = self.st_gameover
 
-            if self.state == self.st_interactive: # Not updating path condition
+            if self.state == self.st_interactive:
                 try:
                     trans_scr.blit(self.new_tile[0],(x,y))  # Draw transparent tile
                 except:
-                    for i in range(len(self.g_board.coords)):
-                        if self.g_board.coords[i][2] == self.g_board.line1[0]:
-                            break
+                    self.calc_chain(start=True)
 
-                    current_piece = self.g_board.pieces[i]
-
-                    if current_piece[0][1] != [] and self.state != self.st_gameover:
-                        self.state = self.st_cascading
-
-                        if current_piece[0][1] == 1: self.state = self.st_gameover
-
-                        if self.state == self.st_cascading:
-                            chain = 1
-                            self.score += chain
-                            for i in current_piece[0][1]:
-
-                                draw_line = 0
-                                if self.g_board.line1[1] == i[0]:
-                                    self.g_board.line1[1] = i[1]
-                                    draw_line = 1
-                                elif self.g_board.line1[1] == i[1]:
-                                    self.g_board.line1[1] = i[0]
-                                    draw_line = 1
-
-                                if draw_line:
-                                    x1 = 50+cos(radians(i[0]*30-15))*45+current_piece[1][0]
-                                    y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
-                                    x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
-                                    y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
-                                    pg.draw.line(paths_img,color.red,(x1,y1),(x2,y2),3)
-
-                            for i in self.g_board.coords:
-                                if i[2] == self.g_board.line1[0]:
-                                    x = i[0] + xy_px_inc_map[self.g_board.line1[1]][0]
-                                    y = i[1] + xy_px_inc_map[self.g_board.line1[1]][1]
-
-                            for i in range(len(self.g_board.coords)):
-                                if (x,y) == self.g_board.coords[i][0:2]: 
-                                    break
-                            next_piece = self.g_board.pieces[i]
-
-                            if next_piece[0][1] == []:
-                                self.state = self.st_interactive
-                                self.new_tile = make_piece()
-
-            elif self.state == self.st_cascading:   # Still updating path condition
+            elif self.state == self.st_chaining:
                 # Change x,y coordinate
                 self.g_board.line1[0][0] += xy_inc_map[self.g_board.line1[1]][0]
                 self.g_board.line1[0][1] += xy_inc_map[self.g_board.line1[1]][1]
                 # Change path end
                 path_update = ((self.g_board.line1[1] - 1 & ~1) + 7) % 12
                 self.g_board.line1[1] = self.g_board.line1[1] % 2 + path_update
-
-                for i in range(len(self.g_board.coords)):
-                    if self.g_board.coords[i][2] == self.g_board.line1[0]: break
-
-                current_piece = self.g_board.pieces[i]
-
-                if current_piece[0][1] != [] and self.state != self.st_gameover:
-                    self.state = self.st_cascading
-
-                    if current_piece[0][1] == 1: self.state = self.st_gameover
-
-                    if self.state == self.st_cascading: # Award points for chaining
-                        chain += 1
-                        self.score += chain
-                        for i in current_piece[0][1]:
-                            draw_line = 0
-                            if self.g_board.line1[1] == i[0]:
-                                self.g_board.line1[1] = i[1]
-                                draw_line = 1
-                            elif self.g_board.line1[1] == i[1]:
-                                self.g_board.line1[1] = i[0]
-                                draw_line = 1
-                            if draw_line:
-                                x1 = 50+cos(radians(i[0]*30-15))*45+current_piece[1][0]
-                                y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
-                                x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
-                                y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
-                                pg.draw.line(paths_img,color.red,(x1,y1),(x2,y2),3)
-
-                        for i in self.g_board.coords:
-                            if i[2] == self.g_board.line1[0]:
-                                x = i[0] + xy_px_inc_map[self.g_board.line1[1]][0]
-                                y = i[1] + xy_px_inc_map[self.g_board.line1[1]][1]
-
-                        for i in range(len(self.g_board.coords)):
-                            if (x,y) == self.g_board.coords[i][0:2]: break
-                        next_piece = self.g_board.pieces[i]
-
-                        if next_piece[0][1] == []:  # Done chaining, make next tile
-                            self.state = self.st_interactive
-                            self.new_tile = make_piece()
+                self.calc_chain()
 
             # Finish up drawing
             screen.blit(trans_scr,(0,0))
