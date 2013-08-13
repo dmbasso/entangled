@@ -32,6 +32,17 @@ class fonts:
     t2 = pg.font.Font(name, 48)
 
 
+def hex_point(angle, offset=None):
+    """
+        calculates the position of the 12 possible connectors
+    """
+    rang = radians(angle * 30 - 15)
+    if offset is None:
+        offset = [0, 0]
+    return (50 + int(cos(rang) * 45) + offset[0],
+            50 + int(sin(rang) * 45) + offset[1])
+
+
 size = width,height = 800,660
 screen = pg.display.set_mode(size)
 
@@ -93,51 +104,53 @@ class Board:
 
         for i in self.coords:
             if i[2] == self.line1[0]:
-                x = 50+cos(radians(self.line1[1]*30-15))*45+i[0]
-                y = 50+sin(radians(self.line1[1]*30-15))*45+i[1]
-                pg.draw.circle(surface,color.green,(int(round(x)),int(round(y))), 6, 2)
+                pg.draw.circle(surface,color.green,hex_point(self.line1[1], i), 6, 2)
 
 
-def make_piece(hex=1):
-    """Creates a new board piece image and possible paths."""
-
-    if hex:
-        piece = pg.Surface((101,100))
-        piece.set_colorkey(color.black)
-        path_img = pg.Surface((101,100))
-        path_img.set_colorkey(color.white)
-        path_img.set_alpha(254)
-        path_img.fill(color.white)
-        for b in range(10):
-            points = []
-            for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-            pg.draw.polygon(piece,(255-b*10,202-b*10,131-b*10),points)
-        paths = []
+def draw_tile(paths):
+    piece = pg.Surface((101, 100))
+    piece.set_colorkey(color.black)
+    path_img = pg.Surface((101, 100))
+    path_img.set_colorkey(color.white)
+    path_img.set_alpha(254)
+    path_img.fill(color.white)
+    # draw base
+    for b in range(10):
+        points = []
         for i in range(6):
-            while 1:
-                path_s = randint(1,12)
-                path_e = randint(1,12)
-                breaker = 1
-                for b in paths:
-                    if b[0] == path_s or b[1] == path_s or \
-                    b[0] == path_e or b[1] == path_e or path_s == path_e:
-                        breaker = 0
-                        break
-                if len(paths) == 0 and path_s == path_e: breaker = 0
-                if breaker: break
-            paths.append([path_s,path_e])
-        for i in paths:
-            x1 = 50+cos(radians(i[0]*30-15))*45
-            y1 = 50+sin(radians(i[0]*30-15))*45
-            x2 = 50+cos(radians(i[1]*30-15))*45
-            y2 = 50+sin(radians(i[1]*30-15))*45
-            if -1 <= i[0]-i[1] <= 1 and ((i[0] > i[1] and i[0]%2 < i[1]%2) \
-            or (i[0] < i[1] and i[0]%2 > i[1]%2)): width = 10
-            else: width = 5
-            pg.draw.line(path_img,color.black,(x1,y1),(x2,y2),width)
-
+            a = radians(i * 60)
+            t = lambda f: 50 + f(a) * (50 - b)
+            points.append((t(cos), t(sin)))
+        clr = (255 - b * 10, 202 - b * 10, 131 - b * 10)
+        pg.draw.polygon(piece, clr, points)
+    # draw paths
+    for i in paths:
+        p1 = hex_point(i[0])
+        p2 = hex_point(i[1])
+        pg.draw.line(path_img, color.black, p1, p2, 5)
     piece.blit(path_img,(0,0))
-    return [piece,paths]
+    return piece
+
+
+def make_piece():
+    paths = []
+    for i in range(6):
+        while 1:
+            path_s = randint(1, 12)
+            path_e = randint(1, 12)
+            breaker = 1
+            for b in paths:
+                if b[0] == path_s or b[1] == path_s \
+                or b[0] == path_e or b[1] == path_e \
+                or path_s == path_e:
+                    breaker = 0
+                    break
+            if len(paths) == 0 and path_s == path_e:
+                breaker = 0
+            if breaker:
+                break
+        paths.append([path_s, path_e])
+    return [draw_tile(paths), paths]
 
 
 def draw_text(x,y,font,text,colour,surface=screen):
@@ -208,30 +221,7 @@ class Entangled:
             i[1] = (i[1]+2)%12
             if i[0] == 0: i[0] = 12
             if i[1] == 0: i[1] = 12
-
-        piece = pg.Surface((101,100))  # Change the image of the tile
-        piece.set_colorkey(color.black)
-        path_img = pg.Surface((101,100))
-        path_img.set_colorkey(color.white)
-        path_img.set_alpha(254)
-        path_img.fill(color.white)
-        for b in range(10):
-            points = []
-            for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-            pg.draw.polygon(piece,(255-b*10,202-b*10,131-b*10),points)
-
-        for i in self.new_tile[1]:   # Redraw the paths
-            x1 = 50+cos(radians(i[0]*30-15))*45
-            y1 = 50+sin(radians(i[0]*30-15))*45
-            x2 = 50+cos(radians(i[1]*30-15))*45
-            y2 = 50+sin(radians(i[1]*30-15))*45
-            if -1 <= i[0]-i[1] <= 1 and ((i[0] > i[1] and i[0]%2 < i[1]%2) \
-            or (i[0] < i[1] and i[0]%2 > i[1]%2)): width = 10
-            else: width = 5
-            pg.draw.line(path_img,color.black,(x1,y1),(x2,y2),width)
-        piece.blit(path_img,(0,0))
-
-        self.new_tile[0] = piece
+        self.new_tile[0] = draw_tile(self.new_tile[1])
 
     def place_tile(self):
         """
