@@ -185,9 +185,9 @@ def draw_text(x,y,font,text,colour,surface=screen):
 
 
 xy_incs = [(1, 0), (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1)]
+xy_incs = [xy_incs[i // 2] for i in range(12)]
 xy_px_incs = [(75, 44), (0, 88), (-75, 44), (-75, -44), (0, -88), (75, -44)]
-xy_inc_map = dict((i + 1, xy_incs[i // 2]) for i in range(12))
-xy_px_inc_map = dict((i + 1, xy_px_incs[i // 2]) for i in range(12))
+xy_px_incs = [xy_px_incs[i // 2] for i in range(12)]
 
 
 class Entangled:
@@ -252,8 +252,8 @@ class Entangled:
             place down new tile and update path
         """
         # Change x,y coordinate
-        self.g_board.line1[0][0] += xy_inc_map[self.g_board.line1[1]][0]
-        self.g_board.line1[0][1] += xy_inc_map[self.g_board.line1[1]][1]
+        self.g_board.line1[0][0] += xy_incs[self.g_board.line1[1] - 1][0]
+        self.g_board.line1[0][1] += xy_incs[self.g_board.line1[1] - 1][1]
         # Complex path changing
         path_update = ((self.g_board.line1[1] - 1 & ~1) + 7) % 12
         self.g_board.line1[1] = self.g_board.line1[1] % 2 + path_update
@@ -294,8 +294,8 @@ class Entangled:
 
                 for i in self.g_board.coords:
                     if i[2] == self.g_board.line1[0]:
-                        x = i[0] + xy_px_inc_map[self.g_board.line1[1]][0]
-                        y = i[1] + xy_px_inc_map[self.g_board.line1[1]][1]
+                        x = i[0] + xy_px_incs[self.g_board.line1[1] - 1][0]
+                        y = i[1] + xy_px_incs[self.g_board.line1[1] - 1][1]
 
                 for i in range(len(self.g_board.coords)):
                     if (x,y) == self.g_board.coords[i][0:2]: break
@@ -329,8 +329,8 @@ class Entangled:
 
             for i in self.g_board.coords:
                 if i[2] == self.g_board.line1[0]:
-                    x = i[0] + xy_px_inc_map[self.g_board.line1[1]][0]
-                    y = i[1] + xy_px_inc_map[self.g_board.line1[1]][1]
+                    x = i[0] + xy_px_incs[self.g_board.line1[1] - 1][0]
+                    y = i[1] + xy_px_incs[self.g_board.line1[1] - 1][1]
                     in_map = False
                     for i in self.g_board.coords:
                         if i[0:2] == (x,y):
@@ -346,8 +346,8 @@ class Entangled:
 
             elif self.state == self.st_chaining:
                 # Change x,y coordinate
-                self.g_board.line1[0][0] += xy_inc_map[self.g_board.line1[1]][0]
-                self.g_board.line1[0][1] += xy_inc_map[self.g_board.line1[1]][1]
+                self.g_board.line1[0][0] += xy_incs[self.g_board.line1[1] - 1][0]
+                self.g_board.line1[0][1] += xy_incs[self.g_board.line1[1] - 1][1]
                 # Change path end
                 path_update = ((self.g_board.line1[1] - 1 & ~1) + 7) % 12
                 self.g_board.line1[1] = self.g_board.line1[1] % 2 + path_update
