@@ -99,12 +99,20 @@ class Board:
 
         for i in self.pieces: surface.blit(i[0][0],i[1])
 
-    def draw_path(self,surface):
-        """Draws the current path taken through the board."""
-
+    def draw_extreme(self,surface):
+        """
+            draws the extreme of the current path taken through the board
+        """
         for i in self.coords:
             if i[2] == self.line1[0]:
-                pg.draw.circle(surface,color.green,hex_point(self.line1[1], i), 6, 2)
+                pg.draw.circle(surface, color.green,
+                               hex_point(self.line1[1], i), 6, 2)
+
+
+def draw_path(surface, path, color, width, offset=None):
+    p1 = hex_point(path[0], offset)
+    p2 = hex_point(path[1], offset)
+    pg.draw.line(surface, color, p1, p2, width)
 
 
 def draw_tile(paths):
@@ -124,10 +132,8 @@ def draw_tile(paths):
         clr = (255 - b * 10, 202 - b * 10, 131 - b * 10)
         pg.draw.polygon(piece, clr, points)
     # draw paths
-    for i in paths:
-        p1 = hex_point(i[0])
-        p2 = hex_point(i[1])
-        pg.draw.line(path_img, color.black, p1, p2, 5)
+    for path in paths:
+        draw_path(path_img, path, color.black, 5)
     piece.blit(path_img,(0,0))
     return piece
 
@@ -266,11 +272,7 @@ class Entangled:
                         self.g_board.line1[1] = i[0]
                         draw_line = 1
                     if draw_line:
-                        x1 = 50+cos(radians(i[0]*30-15))*45+current_piece[1][0]
-                        y1 = 50+sin(radians(i[0]*30-15))*45+current_piece[1][1]
-                        x2 = 50+cos(radians(i[1]*30-15))*45+current_piece[1][0]
-                        y2 = 50+sin(radians(i[1]*30-15))*45+current_piece[1][1]
-                        pg.draw.line(paths_img,color.red,(x1,y1),(x2,y2),3)
+                        draw_path(paths_img, i, color.red, 3, current_piece[1])
 
                 for i in self.g_board.coords:
                     if i[2] == self.g_board.line1[0]:
@@ -344,7 +346,7 @@ class Entangled:
             if 640 < self.mx < 760 and 15 < self.my < 45:
                 pg.draw.rect(screen,color.black,(640,15,120,30),2)
 
-            self.g_board.draw_path(screen)
+            self.g_board.draw_extreme(screen)
 
             if self.state == self.st_gameover:    # Game ending condition
                 screen.blit(fonts.t1.render('Game Over',0,color.black),(150,250))
