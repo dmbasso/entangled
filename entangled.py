@@ -7,10 +7,15 @@
 
 
 import os
+import json
+import time
 import pygame as pg
 
 from random import randint
 from math import cos, sin, radians
+
+
+high_scores_filename = os.path.expanduser("~/.config/entangled-scores.json")
 
 
 pg.init()
@@ -197,11 +202,13 @@ class Entangled:
     def __init__(self):
         self.done = False
         self.new_game()
+        self.high_scores = None
 
     def new_game(self):
         self.g_board = Board()   # Initialise game board
         self.state = self.st_interactive
         self.score = 0
+        self.hs_updated = False
         self.new_tile = make_piece() # Make the next tile
         self.rep_tile = make_piece() # Make the reserved tile
         paths_img.fill(color.black)
@@ -306,6 +313,19 @@ class Entangled:
                     self.state = self.st_interactive
                     self.new_tile = make_piece()
 
+    def update_highscores(self):
+        if self.hs_updated:
+            return
+        try:
+            if not self.high_scores:
+                self.high_scores = json.loads(open(high_scores_filename).read())
+        except:
+            self.high_scores = []
+        self.high_scores.append([self.score, time.strftime("%Y-%m-%d %H:%M")])
+        self.high_scores = sorted(self.high_scores, reverse=True)[:5]
+        open(high_scores_filename, 'w').write(json.dumps(self.high_scores))
+        self.hs_updated = True
+
     def main_loop(self):
         """
             coordinate the game processing flow
@@ -386,7 +406,12 @@ class Entangled:
                 if self.score == 1:
                     screen.blit(fonts.t2.render('You are a disgrace.',1,color.white),(100,310))
                 else:
-                    screen.blit(fonts.t2.render('You scored '+str(self.score)+' points.',1,color.white),(70,310))
+                    screen.blit(fonts.t2.render('You scored %i points.' % self.score,1,color.white),(70,310))
+                self.update_highscores()
+                for i, s in enumerate(self.high_scores):
+                    surf = fonts.p.render('%s - %i' % (s[1], s[0]), 1,
+                        (0, 255, 255) if s[0] == self.score else color.green)
+                    screen.blit(surf, (185, 380 + i * 30))
 
             pg.display.flip()
             pg.time.wait(30)
