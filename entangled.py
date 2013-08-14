@@ -223,7 +223,8 @@ class Entangled:
         """
             check if click was on new game button and act accordingly
         """
-        if self.left_click and 640 < self.mx < 760 and 15 < self.my < 45:
+        if self.left_click and 640 < self.mx < 760 and 15 < self.my < 45 \
+        or pg.key.get_pressed()[pg.K_RETURN]:
             self.new_game()
             return True
 
@@ -236,13 +237,13 @@ class Entangled:
             self.new_tile, self.rep_tile = self.rep_tile, self.new_tile
             return True
 
-    def rotate_tile(self):
+    def rotate_tile(self, ccw=False):
         """
             rotate the current tile
         """
         for i in self.new_tile[1]:
-            i[0] = (i[0]+2)%12
-            i[1] = (i[1]+2)%12
+            i[0] = (i[0] + (-2 if ccw else 2)) % 12
+            i[1] = (i[1] + (-2 if ccw else 2)) % 12
             if i[0] == 0: i[0] = 12
             if i[1] == 0: i[1] = 12
         self.new_tile[0] = draw_tile(self.new_tile[1])
@@ -321,6 +322,19 @@ class Entangled:
                         self.place_tile()
                 elif self.right_click:
                         self.rotate_tile()
+                else:
+                    if pg.key.get_pressed()[pg.K_LEFT]:
+                        self.rotate_tile(ccw=True)
+                        pg.time.wait(100)
+                    elif pg.key.get_pressed()[pg.K_RIGHT]:
+                        self.rotate_tile()
+                        pg.time.wait(100)
+                    elif pg.key.get_pressed()[pg.K_UP]:
+                        self.place_tile()
+                        pg.time.wait(200)
+                    elif pg.key.get_pressed()[pg.K_DOWN]:
+                        self.new_tile, self.rep_tile = self.rep_tile, self.new_tile
+                        pg.time.wait(100)
 
             # Update the screen image
             screen.fill(color.white)
