@@ -26,6 +26,17 @@ class color:
     black = (0, 0, 0)
     red = (255, 0, 0)
     green = (0,255,0)
+    gray1 = (180, 180, 180)
+    gray2 = (160, 160, 160)
+    bordeaux = (100, 0, 30)
+    greyish_violet = (220, 200, 240)
+    orange = (255, 160, 0)
+
+    background = gray2
+    blank_tile = gray1
+    start_tile = bordeaux
+    tile = greyish_violet
+    path_extreme = orange
 
 
 class fonts:
@@ -33,8 +44,8 @@ class fonts:
     if not os.path.exists(name):
         name = pg.font.get_default_font()
     p = pg.font.Font(name, 20)
-    t1 = pg.font.Font(name, 58)
-    t2 = pg.font.Font(name, 48)
+    t1 = pg.font.Font(name, 50)
+    t2 = pg.font.Font(name, 40)
 
 
 def hex_point(angle, offset=None):
@@ -48,7 +59,7 @@ def hex_point(angle, offset=None):
             50 + int(sin(rang) * 45) + offset[1])
 
 
-size = width,height = 800,660
+size = width,height = 600,660
 screen = pg.display.set_mode(size)
 
 trans_scr = pg.Surface(size)
@@ -58,19 +69,18 @@ trans_scr.set_colorkey(color.black)
 paths_img = pg.Surface(size)
 paths_img.set_colorkey(color.black)
 
+hex_points = [
+    (50 + 48 * cos(radians(i * 60)), 50 + 48 * sin(radians(i * 60)))
+    for i in range(6)
+    ]
+
 empty_hex = pg.Surface((101,100)) # Base image for a board piece
 empty_hex.set_colorkey(color.black)
-for b in range(20):
-    points = []
-    for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-    pg.draw.polygon(empty_hex,(100,100,175+b*4),points)
+pg.draw.polygon(empty_hex, color.blank_tile, hex_points)
 
 start_hex = pg.Surface((101,100))
 start_hex.set_colorkey(color.black)
-for b in range(20):
-    points = []
-    for i in range(6): points.append((50+cos(radians(i*60))*(50-b),50+sin(radians(i*60))*(50-b)))
-    pg.draw.polygon(start_hex,(175+b*4,0,0),points)
+pg.draw.polygon(start_hex, color.start_tile, hex_points)
 
 
 class Board:
@@ -110,7 +120,7 @@ class Board:
         """
         for i in self.coords:
             if i[2] == self.line1[0]:
-                pg.draw.circle(surface, color.green,
+                pg.draw.circle(surface, color.path_extreme,
                                hex_point(self.line1[1], i), 6, 2)
 
 
@@ -123,7 +133,7 @@ def bezier(p, t):
         )
 
 
-def draw_path(surface, path, color, width, offset=None):
+def draw_path(surface, path, color, width, offset=None, mag=1):
     cx = 50 + (0 if offset is None else offset[0])
     cy = 50 + (0 if offset is None else offset[1])
     p1 = hex_point(path[0], offset)
@@ -134,14 +144,14 @@ def draw_path(surface, path, color, width, offset=None):
     for i in range(11):
         x = bezier([p1[0], cx, cx, p2[0]], i / 10.)
         y = bezier([p1[1], cy, cy, p2[1]], i / 10.)
-        points.append((x, y))
+        points.append((mag * x, mag * y))
     pg.draw.lines(surface, color, False, points, width)
 
 
 def draw_tile(paths):
-    piece = pg.Surface((101, 100))
+    piece = pg.Surface((202, 200))
     piece.set_colorkey(color.black)
-    path_img = pg.Surface((101, 100))
+    path_img = pg.Surface((202, 200))
     path_img.set_colorkey(color.white)
     path_img.set_alpha(254)
     path_img.fill(color.white)
@@ -150,16 +160,17 @@ def draw_tile(paths):
         points = []
         for i in range(6):
             a = radians(i * 60)
-            t = lambda f: 50 + f(a) * (50 - b)
+            t = lambda f: 100 + f(a) * (100 - b)
             points.append((t(cos), t(sin)))
-        clr = (255 - b * 10, 202 - b * 10, 131 - b * 10)
+        clr = (color.tile[0] - b * 10,
+               color.tile[1] - b * 10,
+               color.tile[2] - b * 10)
         pg.draw.polygon(piece, clr, points)
     # draw paths
     for path in paths:
-        draw_path(path_img, path, color.black, 5)
+        draw_path(path_img, path, color.black, 9, None, 2)
     piece.blit(path_img,(0,0))
-    return piece
-
+    return pg.transform.smoothscale(piece, (101, 100))
 
 def make_piece():
     paths = []
@@ -230,7 +241,7 @@ class Entangled:
         """
             check if click was on new game button and act accordingly
         """
-        if self.left_click and 640 < self.mx < 760 and 15 < self.my < 45 \
+        if self.left_click and 440 < self.mx < 560 and 15 < self.my < 45 \
         or pg.key.get_pressed()[pg.K_RETURN]:
             self.new_game()
             return True
@@ -322,7 +333,7 @@ class Entangled:
         except:
             self.high_scores = []
         self.high_scores.append([self.score, time.strftime("%Y-%m-%d %H:%M")])
-        self.high_scores = sorted(self.high_scores, reverse=True)[:5]
+        self.high_scores = sorted(self.high_scores, reverse=True)[:50]
         open(high_scores_filename, 'w').write(json.dumps(self.high_scores))
         self.hs_updated = True
 
@@ -357,8 +368,7 @@ class Entangled:
                         pg.time.wait(100)
 
             # Update the screen image
-            screen.fill(color.white)
-            trans_scr.fill(color.black)
+            screen.fill(color.background)
             self.g_board.draw_board(screen)
 
             for i in self.g_board.coords:
@@ -374,6 +384,7 @@ class Entangled:
 
             if self.state == self.st_interactive:
                 try:
+                    trans_scr.fill(color.black)
                     trans_scr.blit(self.new_tile[0],(x,y))  # Draw transparent tile
                 except:
                     self.calc_chain(start=True)
@@ -388,30 +399,34 @@ class Entangled:
                 self.calc_chain()
 
             # Finish up drawing
-            screen.blit(trans_scr,(0,0))
-            screen.blit(paths_img,(0,0))
-            screen.blit(self.rep_tile[0],(0,530))
+            if self.state == self.st_gameover:
+                trans_scr.fill((1, 1, 1))
+
+            screen.blit(paths_img, (0, 0))
+            screen.blit(trans_scr, (0, 0))
+            if self.state != self.st_gameover:
+                screen.blit(self.rep_tile[0], (10, 530))
 
             p_msg = fonts.p.render('Points: '+str(self.score),1,color.black)
             screen.blit(p_msg,(10,10))
-            draw_text(700, 30, fonts.p, 'New Game',color.black)
-            if 640 < self.mx < 760 and 15 < self.my < 45:
-                pg.draw.rect(screen,color.black,(640,15,120,30),2)
+            draw_text(500, 30, fonts.p, 'New Game',color.black)
+            if 440 < self.mx < 560 and 15 < self.my < 45:
+                pg.draw.rect(screen,color.black,(440,15,120,30),2)
 
             self.g_board.draw_extreme(screen)
 
             if self.state == self.st_gameover:    # Game ending condition
-                screen.blit(fonts.t1.render('Game Over',0,color.black),(150,250))
-                screen.blit(fonts.t1.render('Game Over',1,color.white),(150,250))
+                screen.blit(fonts.t1.render('Game Over', 0, color.black), (150, 125))
+                screen.blit(fonts.t1.render('Game Over', 1, color.white), (150, 125))
                 if self.score == 1:
-                    screen.blit(fonts.t2.render('You are a disgrace.',1,color.white),(100,310))
+                    screen.blit(fonts.t2.render('You are a disgrace.', 1, color.white), (100, 185))
                 else:
-                    screen.blit(fonts.t2.render('You scored %i points.' % self.score,1,color.white),(70,310))
+                    screen.blit(fonts.t2.render('You scored %i points.' % self.score, 1, color.white), (70, 185))
                 self.update_highscores()
-                for i, s in enumerate(self.high_scores):
+                for i, s in enumerate(self.high_scores[:10]):
                     surf = fonts.p.render('%s - %i' % (s[1], s[0]), 1,
                         (0, 255, 255) if s[0] == self.score else color.green)
-                    screen.blit(surf, (185, 380 + i * 30))
+                    screen.blit(surf, (185, 255 + i * 30))
 
             pg.display.flip()
             pg.time.wait(30)
